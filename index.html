@@ -89,13 +89,6 @@ details[open] summary{margin-bottom:10px}
 .bar i{position:absolute;top:-5px;width:4px;height:22px;background:#fff;border-radius:2px;left:var(--cur,30%);transform:translateX(-2px);transition:left .2s}
 .bar-l{display:flex;justify-content:space-between;font:500 11px var(--mono);color:#9aa9a3;margin-top:6px}
 
-.chartbox{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 16px 10px;min-width:0}
-.chartbox h2{font:600 20px/1.1 var(--display);text-transform:uppercase;letter-spacing:.03em;margin:0 0 4px}
-.chartbox p{margin:0 0 8px;font-size:13px;color:var(--muted)}
-svg text{fill:var(--muted);font:500 11px var(--mono)}
-.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
-.legend span::before{content:"";display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle;background:currentColor}
-.legend .l1{color:var(--fuel)} .legend .l2{color:var(--volt)}
 footer{font-size:12px;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -193,13 +186,6 @@ footer{font-size:12px;color:var(--muted)}
           </div>
         </div>
       </div>
-
-      <div class="chartbox">
-        <h2>Kosten je Strompreis</h2>
-        <p>Wo die grüne Linie unter der orangen liegt, ist Laden günstiger.</p>
-        <svg id="chart" viewBox="0 0 560 260" width="100%" role="img" aria-label="Kosten pro 100 km in Abhängigkeit vom Strompreis"></svg>
-        <div class="legend"><span class="l1" id="lgFuel">Diesel</span><span class="l2">Laden</span></div>
-      </div>
     </section>
   </div>
 
@@ -238,7 +224,6 @@ footer{font-size:12px;color:var(--muted)}
     $('epOut').innerHTML = nf(ep,2) + '<small>€/kWh</small>';
     $('consLabel').textContent = 'Verbrauch ' + (fuelType() === 'diesel' ? 'Diesel' : 'Benzin');
     $('kFuel').textContent = fuelName() + ' / 100 km';
-    $('lgFuel').textContent = fuelName();
     if (!(price > 0)) { $('verdict').textContent = 'Bitte Spritpreis eintragen'; return; }
 
     const cFuel = cons * price, cEv = kwh * ep, be = cFuel / kwh, diff = cFuel - cEv;
@@ -255,34 +240,6 @@ footer{font-size:12px;color:var(--muted)}
     const pct = x => Math.max(0, Math.min(100, (x - EP_MIN) / (EP_MAX - EP_MIN) * 100)) + '%';
     $('bar').style.setProperty('--be', pct(be));
     $('bar').style.setProperty('--cur', pct(ep));
-    drawChart(cFuel, kwh, ep, be);
-  }
-
-  function drawChart(cFuel, kwh, ep, be){
-    const W=560,H=260,L=44,R=14,T=14,B=34, svg=$('chart');
-    const yMax = Math.max(cFuel, kwh*EP_MAX) * 1.1;
-    const step = yMax > 30 ? 10 : yMax > 15 ? 5 : 2;
-    const yTop = Math.ceil(yMax/step)*step;
-    const x = p => L + (p-EP_MIN)/(EP_MAX-EP_MIN)*(W-L-R);
-    const y = c => T + (1 - c/yTop)*(H-T-B);
-    const cs = getComputedStyle(document.documentElement);
-    const fuel = cs.getPropertyValue('--fuel').trim(), volt = cs.getPropertyValue('--volt').trim(), line = cs.getPropertyValue('--line').trim(), soft = cs.getPropertyValue('--soft').trim();
-    let s = '';
-    for (let c=0; c<=yTop; c+=step) s += `<line x1="${L}" x2="${W-R}" y1="${y(c)}" y2="${y(c)}" stroke="${line}" stroke-width="1"/><text x="${L-6}" y="${y(c)+4}" text-anchor="end">${c} €</text>`;
-    for (let p=0.1; p<=0.9001; p+=0.1) s += `<text x="${x(p)}" y="${H-12}" text-anchor="middle">${nf(p,1)}</text>`;
-    s += `<text x="${W-R}" y="${H-0}" text-anchor="end">€/kWh</text>`;
-    if (be > EP_MIN) { const bx = x(Math.min(be, EP_MAX)); s += `<rect x="${L}" y="${T}" width="${bx-L}" height="${H-T-B}" fill="${soft}"/>`;
-      for (let c=0; c<=yTop; c+=step) s += `<line x1="${L}" x2="${bx}" y1="${y(c)}" y2="${y(c)}" stroke="${line}" stroke-width="1"/>`; }
-    s += `<line x1="${x(EP_MIN)}" x2="${x(EP_MAX)}" y1="${y(cFuel)}" y2="${y(cFuel)}" stroke="${fuel}" stroke-width="3"/>`;
-    s += `<line x1="${x(EP_MIN)}" x2="${x(EP_MAX)}" y1="${y(kwh*EP_MIN)}" y2="${y(kwh*EP_MAX)}" stroke="${volt}" stroke-width="3"/>`;
-    if (be >= EP_MIN && be <= EP_MAX) {
-      s += `<line x1="${x(be)}" x2="${x(be)}" y1="${y(cFuel)}" y2="${H-B}" stroke="${fuel}" stroke-dasharray="3 3" stroke-width="1.5"/>`;
-      s += `<circle cx="${x(be)}" cy="${y(cFuel)}" r="5" fill="${fuel}"/>`;
-      const anchor = be > 0.75 ? 'end' : 'start', dx = be > 0.75 ? -8 : 8;
-      s += `<text x="${x(be)+dx}" y="${y(cFuel)-12}" text-anchor="${anchor}" style="fill:${fuel};font-weight:600;font-size:13px;paint-order:stroke;stroke:var(--panel);stroke-width:4px">${nf(be,3)} €/kWh</text>`;
-    }
-    s += `<circle cx="${x(ep)}" cy="${y(kwh*ep)}" r="6" fill="${volt}" stroke="var(--panel)" stroke-width="2"/>`;
-    svg.innerHTML = s;
   }
 
   async function fetchPrice(){
@@ -335,7 +292,6 @@ footer{font-size:12px;color:var(--muted)}
   document.querySelectorAll('input[name=fuel],input[name=sorte]').forEach(r => r.addEventListener('change', onFuelChange));
   $('fetchBtn').addEventListener('click', fetchPrice);
   $('plz').addEventListener('keydown', e => { if (e.key === 'Enter') fetchPrice(); });
-  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', render);
 
   const p = store.get('plz');
   if (p) $('plz').value = p;
