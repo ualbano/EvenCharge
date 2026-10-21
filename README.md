@@ -8,7 +8,7 @@ Die Web-App vergleicht die Energiekosten pro 100 km zwischen Verbrenner (Diesel,
 - **Diesel oder Benzin** per Auswahlknopf, bei Benzin zusätzlich Super E5 oder E10.
 - **Schieberegler** für Spritverbrauch, Stromverbrauch (Bordcomputer), Ladeverluste und Strompreis.
 - **Ladeverluste** werden pauschal aufgeschlagen. Schnellwahl: DC-Schnelllader 5 %, Wallbox 10 %, Haushaltssteckdose 18 %.
-- **Ergebnis:** Kosten pro 100 km, Ersparnis, Strompreis, bis zu dem Laden günstiger ist (Break-even).
+- **Ergebnis:** Kosten pro 100 km, Ersparnis, Strompreis, bis zu dem Laden günstiger ist (Break-even) sowie die Kosten pro Jahr bei frei wählbarer Jahreslaufleistung (Standard 15.000 km).
 
 ## Rechnung
 

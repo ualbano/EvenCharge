@@ -85,6 +85,15 @@ details[open] summary{margin-bottom:10px}
 .tile .v sup{font-size:.5em;vertical-align:.75em;margin-left:1px}
 .tile .u{font-size:12px;color:#9aa9a3}
 .tile.full{grid-column:1/-1}
+.year-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.km{display:flex;align-items:center;gap:6px;font:500 13px var(--body);color:#9aa9a3}
+.km input{width:8.5em;background:#0c1210;color:var(--board-ink);border:1px solid #3a4842;border-radius:6px;padding:7px 9px;font:600 16px/1 var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.km input:focus-visible{outline:2px solid var(--board-ink);outline-offset:1px}
+.year{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:8px}
+.year div{display:grid;gap:4px;min-width:0}
+.year .yv{font:600 clamp(18px,3.2vw,26px)/1.1 var(--mono);color:#e9efe9;font-variant-numeric:tabular-nums;white-space:nowrap}
+.year .yv.save{color:var(--board-ink)}
+@media (max-width:460px){.year{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.year .last{grid-column:1/-1}}
 .bar{position:relative;height:12px;border-radius:6px;background:linear-gradient(90deg,#1f6e53 0%,#1f6e53 var(--be,50%),#7b3418 var(--be,50%),#7b3418 100%)}
 .bar i{position:absolute;top:-5px;width:4px;height:22px;background:#fff;border-radius:2px;left:var(--cur,30%);transform:translateX(-2px);transition:left .2s}
 .bar-l{display:flex;justify-content:space-between;font:500 11px var(--mono);color:#9aa9a3;margin-top:6px}
@@ -184,6 +193,18 @@ footer{font-size:12px;color:var(--muted)}
               <div class="bar-l"><span>0,10 €</span><span>günstiger ◂ | ▸ teurer</span><span>0,90 €/kWh</span></div>
             </div>
           </div>
+          <div class="tile full">
+            <div class="year-head">
+              <span class="k">Kosten pro Jahr</span>
+              <label class="km" for="km"><input type="number" id="km" min="0" max="200000" step="1000" value="15000" inputmode="numeric"> km/Jahr</label>
+            </div>
+            <div class="year">
+              <div><span class="u" id="kYFuel">Diesel</span><span class="yv" id="vYFuel">–</span></div>
+              <div><span class="u">Laden</span><span class="yv" id="vYEv">–</span></div>
+              <div class="last"><span class="u" id="kYDiff">Ersparnis</span><span class="yv save" id="vYDiff">–</span></div>
+            </div>
+            <span class="u" id="uY" style="margin-top:6px"></span>
+          </div>
         </div>
       </div>
     </section>
@@ -232,6 +253,14 @@ footer{font-size:12px;color:var(--muted)}
     $('vEv').textContent = nf(cEv,2) + ' €';
     $('uEv').textContent = nf(kwhCar,1) + ' kWh + ' + loss + ' % = ' + nf(kwh,1) + ' kWh × ' + nf(ep,2) + ' €';
     $('vBe').innerHTML = pump(be) + ' €/kWh';
+    const km = Math.max(0, +$('km').value || 0), f = km / 100;
+    const eur0 = v => v.toLocaleString('de-DE', {maximumFractionDigits: 0}) + ' €';
+    $('kYFuel').textContent = fuelName();
+    $('vYFuel').textContent = eur0(cFuel * f);
+    $('vYEv').textContent = eur0(cEv * f);
+    $('kYDiff').textContent = diff >= 0 ? 'Ersparnis mit Laden' : 'Mehrkosten mit Laden';
+    $('vYDiff').textContent = eur0(Math.abs(diff) * f);
+    $('uY').textContent = 'Bei ' + km.toLocaleString('de-DE') + ' km: ' + nf(cons * f, 0) + ' L ' + fuelName() + ' oder ' + nf(kwh * f, 0) + ' kWh Strom aus dem Netz';
     $('uBe').textContent = 'Breakeven = ' + nf(cFuel,2) + ' € ÷ ' + nf(kwh,1) + ' kWh. Dein Strompreis: ' + nf(ep,2) + ' €/kWh';
     const v = $('verdict');
     if (Math.abs(diff) < 0.005) { v.textContent = 'Gleich teuer'; v.className = 'verdict'; }
@@ -288,12 +317,14 @@ footer{font-size:12px;color:var(--muted)}
   }
 
   document.querySelectorAll('[data-loss]').forEach(b => b.addEventListener('click', () => { $('loss').value = b.dataset.loss; render(); }));
-  ['cons','kwh','loss','ep','price'].forEach(id => $(id).addEventListener('input', render));
+  $('km').addEventListener('change', () => store.set('km', $('km').value));
+  ['cons','kwh','loss','ep','price','km'].forEach(id => $(id).addEventListener('input', render));
   document.querySelectorAll('input[name=fuel],input[name=sorte]').forEach(r => r.addEventListener('change', onFuelChange));
   $('fetchBtn').addEventListener('click', fetchPrice);
   $('plz').addEventListener('keydown', e => { if (e.key === 'Enter') fetchPrice(); });
 
-  const p = store.get('plz');
+  const p = store.get('plz'), kmSaved = store.get('km');
+  if (kmSaved) $('km').value = kmSaved;
   if (p) $('plz').value = p;
   render();
   if (hasKey && p) fetchPrice();
